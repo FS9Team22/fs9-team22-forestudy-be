@@ -12,3 +12,45 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model Study{
+ id String @id @default(cuid())
+ title String //스터디이름
+ nickname String //생성자 이름
+ description  String //소개
+ point Int //포인트
+ background Int //배경 이미지 번호
+ password String //비밀번호
+ createdAt  DateTime  @default(now()) //만든시각
+ updatedAt  DateTime  @updatedAt //업데이트 시각
+ habits Habit[]
+ reactions Reaction[]
+}
+
+model Reaction{
+ id  String   @id @default(uuid())
+ studyId String
+ study Study @relation(fields:[studyId], references:[id], onDelete: Cascade)
+ emoji String //반응 이모지
+ count Int //반응 카운트
+ @@unique([studyId, emoji]) //복합 고유 필드
+}
+
+model Habit{
+ id  String   @id @default(cuid())
+ studyId String
+ study Study @relation(fields:[studyId], references:[id], onDelete: Cascade)
+ name  String //습관이름
+ createdAt  DateTime @default(now()) //만든시각
+ updatedAt  DateTime @updatedAt //업데이트 시각
+ habitLogs HabitLog[]
+}
+
+model HabitLog{
+ id  String   @id @default(uuid())
+ habitId String
+ habit Habit @relation(fields:[habitId], references:[id], onDelete: Cascade)
+ loggingDate DateTime @default(dbgenerated("CURRENT_DATE")) @db.Date //로깅 생성 시간(===달성 시간)
+ @@unique([habitId, loggingDate]) //복합 고유 필드
+ @@index([loggingDate])
+}
