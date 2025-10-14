@@ -1,19 +1,42 @@
 import express from 'express';
 import { router } from './routes/index.js';
-import { config } from './config/config.js';
-
-console.log(process.env);
+import { logger } from './middlewares/logger.js';
+import { requestTimer } from './middlewares/requestTimer.js';
+import { config, isDevelopment } from './config/config.js';
+import { errorHandler } from './middlewares/errorHandler.js';
+import { disconnectDB } from './db/prisma.js';
+import { cors } from './middlewares/cors.js';
 
 const app = express();
 
-// JSON 파싱 미들웨어
 app.use(express.json());
+
 app.use(express.urlencoded({ extended: true }));
 
-// 기본 라우트
+app.use(cors);
+
+if (isDevelopment) {
+  app.use(logger);
+  app.use(requestTimer);
+}
+
 app.use('/', router);
 
-// 서버 시작
-app.listen(config.PORT, () => {
+app.use(errorHandler);
+
+const server = app.listen(config.PORT, () => {
   console.log(`🚀 Server running on http://localhost:${config.PORT}`);
+  console.log(`📦 Environment: ${config.ENVIRONMENT}`);
 });
+
+const shutdown = (signal) => {
+  console.log(`\n${signal} received. Shutting down gracefully...`);
+  server.close(async () => {
+    console.log('✅ HTTP server closed.');
+    await disconnectDB();
+    process.exit(0);
+  });
+};
+
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => shutdown('SIGTERM'));
