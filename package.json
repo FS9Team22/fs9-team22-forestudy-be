@@ -17,6 +17,7 @@
   "scripts": {
     "start": "node --env-file=.env src/server.js",
     "dev": "nodemon --env-file=.env src/server.js",
+    "seed": "node scripts/seed.js",
     "format": "prettier --write .",
     "prepare": "husky"
   },
