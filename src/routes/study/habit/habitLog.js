@@ -7,7 +7,7 @@ router.get('/', async (req, res, next) => {
   try {
     const habitId = req.params.habitId;
     console.log(habitId);
-    const habits = await habitLogRepo.findHabitLogByHabitId(habitId);
+    const habits = await habitLogRepo.findHabitLogListByHabitId(habitId);
     if (!habits) {
       throw new NotFoundException('존재하지 않는 습관 내역입니다.');
     }
