@@ -1,8 +1,18 @@
-import { PrismaClient } from '@prisma/client';
 import express from 'express';
+import bcrypt from 'bcrypt';
+import { PrismaClient } from '@prisma/client';
+import { config } from '../../config/config.js';
 //import { studyRepo } from '../repository/study/study.repo.js';
-const router = express.Router();
+
 const prisma = new PrismaClient();
+const router = express.Router();
+
+const PEPPER_SECRET = config.PEPPER_SECRET;
+
+if (!PEPPER_SECRET) {
+  console.err('PEPPER가 정의되지않았습니다.');
+  process.exit(1);
+}
 
 router.get('/', async (req, res, next) => {
   try {
@@ -59,6 +69,8 @@ router.post('/', async (req, res, next) => {
   try {
     const { nickname, title, description, background, password } = req.body;
 
+    const passwordWithPepper = password + PEPPER_SECRET;
+    const hashedPassword = await bcrypt.hash(passwordWithPepper, 10);
     /** password! */
     const newStudy = await prisma.study.create({
       data: {
@@ -66,7 +78,7 @@ router.post('/', async (req, res, next) => {
         title,
         description,
         background,
-        password,
+        password: hashedPassword,
         point: 0,
       },
     });
