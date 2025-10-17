@@ -2,7 +2,8 @@ import express from 'express';
 import bcrypt from 'bcrypt';
 import { PrismaClient } from '@prisma/client';
 import { config } from '../../config/config.js';
-//import { studyRepo } from '../repository/study/study.repo.js';
+import { studyRepo } from '../../repository/study/study.repo.js';
+import { NotFoundException } from '../../err/notFoundException.js';
 
 const prisma = new PrismaClient();
 const router = express.Router();
@@ -91,6 +92,19 @@ router.post('/', async (req, res, next) => {
   } catch (err) {
     next(err);
     return;
+
+const router = express.Router();
+
+router.get('/:id', async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const study = await studyRepo.findStudyById(id);
+    if (!study) {
+      throw new NotFoundException('존재하지 않는 스터디입니다.');
+    }
+    res.json({ success: true, data: study });
+  } catch (err) {
+    next(err);
   }
 });
 
