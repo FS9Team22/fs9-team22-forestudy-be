@@ -1,10 +1,19 @@
 import { PrismaClient } from '@prisma/client';
+import { config } from '../src/config/config.js';
 import { faker } from '@faker-js/faker';
+import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
 async function main() {
   console.log('Seeding started...');
+
+  const PEPPER_SECRET = config.PEPPER_SECRET;
+
+  if (!PEPPER_SECRET) {
+    console.err('PEPPER가 정의되지않았습니다.');
+    process.exit(1);
+  }
 
   const numberOfStudies = 10; // 생성할 스터디 그룹 수
   const habitsPerStudy = 3; // 스터디 그룹 당 습관 수
@@ -18,16 +27,19 @@ async function main() {
     await tx.habit.deleteMany();
     await tx.study.deleteMany();
     console.log('Existing data deleted.');
+
     for (let i = 0; i < numberOfStudies; i++) {
       // 스터디 생성
+      const passwordWithPepper = faker.internet.password() + PEPPER_SECRET;
+      const hashedPassword = await bcrypt.hash(passwordWithPepper, 10);
       const study = await tx.study.create({
         data: {
           title: faker.lorem.words(3), // 3개의 단어로 된 스터디 이름
           nickname: faker.internet.username(), // 생성자 닉네임
           description: faker.lorem.sentence(), // 스터디 소개
           point: faker.number.int({ min: 0, max: 1000 }), // 0에서 1000 사이의 포인트
-          background: faker.number.int({ min: 1, max: 10 }), // 1에서 10 사이의 배경 이미지 번호
-          password: faker.internet.password(), // 비밀번호
+          background: faker.number.int({ min: 1, max: 8 }), // 1에서 10 사이의 배경 이미지 번호
+          password: hashedPassword, // 비밀번호
         },
       });
 
