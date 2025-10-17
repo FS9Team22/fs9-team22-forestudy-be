@@ -38,7 +38,7 @@ async function main() {
           nickname: faker.internet.username(), // 생성자 닉네임
           description: faker.lorem.sentence(), // 스터디 소개
           point: faker.number.int({ min: 0, max: 1000 }), // 0에서 1000 사이의 포인트
-          background: faker.number.int({ min: 1, max: 10 }), // 1에서 10 사이의 배경 이미지 번호
+          background: faker.number.int({ min: 1, max: 8 }), // 1에서 10 사이의 배경 이미지 번호
           password: hashedPassword, // 비밀번호
         },
       });
