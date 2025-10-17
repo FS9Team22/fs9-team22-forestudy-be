@@ -37,17 +37,7 @@ router.get('/', async (req, res, next) => {
 
     const sortOpt = SORT_MAPING[orderBy];
 
-    const studies = await prisma.study.findMany({
-      where: {
-        OR: [
-          { nickname: { contains: keyword, mode: 'insensitive' } },
-          { title: { contains: keyword, mode: 'insensitive' } },
-        ],
-      },
-      orderBy: sortOpt,
-      skip: limit * (page - 1),
-      take: limit,
-    });
+    const studies = await studyRepo.findStudies(sortOpt, keyword, page, limit);
     res.status(200).json({
       success: true,
       message: '스터디 항목을 가져오는데 성공했습니다.',
@@ -72,17 +62,13 @@ router.post('/', async (req, res, next) => {
     const passwordWithPepper = password + PEPPER_SECRET;
     const hashedPassword = await bcrypt.hash(passwordWithPepper, 10);
     /** password! */
-    const newStudy = await prisma.study.create({
-      data: {
-        nickname,
-        title,
-        description,
-        background,
-        password: hashedPassword,
-        point: 0,
-      },
-    });
-
+    const newStudy = await studyRepo.createStudy(
+      nickname,
+      title,
+      description,
+      background,
+      hashedPassword,
+    );
     res.status(201).json({
       success: true,
       message: '스터디를 만들었습니다',
