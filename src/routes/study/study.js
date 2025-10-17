@@ -1,11 +1,10 @@
 import express from 'express';
 import bcrypt from 'bcrypt';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../db/prisma.js';
 import { config } from '../../config/config.js';
 import { studyRepo } from '../../repository/study/study.repo.js';
 import { NotFoundException } from '../../err/notFoundException.js';
 
-const prisma = new PrismaClient();
 const router = express.Router();
 
 const PEPPER_SECRET = config.PEPPER_SECRET;
@@ -92,8 +91,8 @@ router.post('/', async (req, res, next) => {
   } catch (err) {
     next(err);
     return;
-
-const router = express.Router();
+  }
+});
 
 router.get('/:id', async (req, res, next) => {
   try {
