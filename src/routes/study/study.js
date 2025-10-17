@@ -1,11 +1,10 @@
 import express from 'express';
 import bcrypt from 'bcrypt';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../db/prisma.js';
 import { config } from '../../config/config.js';
 import { studyRepo } from '../../repository/study/study.repo.js';
 import { NotFoundException } from '../../err/notFoundException.js';
 
-const prisma = new PrismaClient();
 const router = express.Router();
 
 const PEPPER_SECRET = config.PEPPER_SECRET;
@@ -38,17 +37,8 @@ router.get('/', async (req, res, next) => {
 
     const sortOpt = SORT_MAPING[orderBy];
 
-    const studies = await prisma.study.findMany({
-      where: {
-        OR: [
-          { nickname: { contains: keyword, mode: 'insensitive' } },
-          { title: { contains: keyword, mode: 'insensitive' } },
-        ],
-      },
-      orderBy: sortOpt,
-      skip: limit * (page - 1),
-      take: limit,
-    });
+    const studies = await studyRepo.findStudies(sortOpt, keyword, page, limit);
+
     res.status(200).json({
       success: true,
       message: '스터디 항목을 가져오는데 성공했습니다.',
@@ -73,16 +63,13 @@ router.post('/', async (req, res, next) => {
     const passwordWithPepper = password + PEPPER_SECRET;
     const hashedPassword = await bcrypt.hash(passwordWithPepper, 10);
     /** password! */
-    const newStudy = await prisma.study.create({
-      data: {
-        nickname,
-        title,
-        description,
-        background,
-        password: hashedPassword,
-        point: 0,
-      },
-    });
+    const newStudy = await studyRepo.createStudy(
+      nickname,
+      title,
+      description,
+      background,
+      hashedPassword,
+    );
 
     res.status(201).json({
       success: true,
@@ -92,8 +79,8 @@ router.post('/', async (req, res, next) => {
   } catch (err) {
     next(err);
     return;
-
-const router = express.Router();
+  }
+});
 
 router.get('/:id', async (req, res, next) => {
   try {
