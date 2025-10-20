@@ -17,7 +17,6 @@ async function main() {
 
   const numberOfStudies = 10; // 생성할 스터디 그룹 수
   const habitsPerStudy = 3; // 스터디 그룹 당 습관 수
-  const logsPerHabit = 15; // 습관 당 로그 수
 
   await prisma.$transaction(async (tx) => {
     console.log('Deleting existing data...');
@@ -71,21 +70,39 @@ async function main() {
 
         console.log(`  - Created habit: ${habit.name}`);
         // 습관 로그(HabitLog) 생성
+        const today = new Date();
         const uniqueDates = new Set();
-        while (uniqueDates.size < logsPerHabit) {
-          const logDate = faker.date.recent({ days: 30 }); // 최근 30일 내의 날짜
-          const dateOnly = logDate.toISOString().split('T')[0]; // 날짜의 시간 부분을 제거
-          uniqueDates.add(dateOnly);
+        const logsPerWeek = 3; // 각 주당 최소 로그 수
+        const totalWeeks = 5; // 2주 전부터 3주 후까지 총 5주
+
+        // 시딩일 기준 -2주 전부터 +2주 후까지 (총 5주) 루프
+        for (let week = -2; week < totalWeeks - 2; week++) {
+          const datesInWeek = new Set();
+          const weekStartDate = new Date(today);
+          weekStartDate.setDate(today.getDate() + week * 7);
+
+          const weekEndDate = new Date(weekStartDate);
+          weekEndDate.setDate(weekStartDate.getDate() + 6);
+
+          while (datesInWeek.size < logsPerWeek) {
+            const logDate = faker.date.between({
+              from: weekStartDate,
+              to: weekEndDate,
+            });
+            const dateOnly = logDate.toISOString().split('T')[0];
+            if (!uniqueDates.has(dateOnly)) {
+              datesInWeek.add(dateOnly);
+            }
+          }
+          datesInWeek.forEach((date) => uniqueDates.add(date));
         }
 
-        for (const dateStr of uniqueDates) {
-          await tx.habitLog.create({
-            data: {
-              habitId: habit.id,
-              loggingDate: new Date(dateStr),
-            },
-          });
-        }
+        const logCreationPromises = Array.from(uniqueDates).map((dateStr) =>
+          tx.habitLog.create({
+            data: { habitId: habit.id, loggingDate: new Date(dateStr) },
+          }),
+        );
+        await Promise.all(logCreationPromises);
         console.log(`- Created ${uniqueDates.size} habit logs`);
       }
     }
