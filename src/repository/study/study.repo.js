@@ -26,6 +26,7 @@ async function findStudies(sortOpt, keyword, page, limit) {
     take: limit,
   });
 }
+
 async function findStudyById(id) {
   return await prisma.study.findUnique({
     where: { id: String(id) },
