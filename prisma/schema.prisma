@@ -25,6 +25,7 @@ model Study{
  updatedAt  DateTime  @updatedAt //업데이트 시각
  habits Habit[]
  reactions Reaction[]
+ session Session[]
 }
 
 model Reaction{
@@ -56,7 +57,9 @@ model HabitLog{
 }
 
 model Session {
-  sid        String   @id
+  sid       String   @id
+  studyId   String 
+  study     Study @relation(fields: [studyId], references: [id], onDelete: Cascade)
   data      String
   expiresAt DateTime
 }
