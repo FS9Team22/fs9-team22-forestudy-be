@@ -25,8 +25,8 @@ router.get('/', async (req, res, next) => {
       limit: limitStr = 6,
     } = req.query;
 
-    const page = parseInt(pageStr);
-    const limit = parseInt(limitStr);
+    const page = Number.isNaN(parseInt(pageStr)) ? 1 : parseInt(pageStr);
+    const limit = Number.isNaN(parseInt(limitStr)) ? 6 : parseInt(limitStr);
     const total = await prisma.study.count();
     const totalPages = Math.ceil(total / limit);
 
