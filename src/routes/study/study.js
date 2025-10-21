@@ -4,13 +4,15 @@ import { prisma } from '../../db/prisma.js';
 import { config } from '../../config/config.js';
 import { studyRepo } from '../../repository/study/study.repo.js';
 import { NotFoundException } from '../../err/notFoundException.js';
+import { validate } from '../../middlewares/validate.js';
+import { createStudyValidation } from '../../validations/study.validation.js';
 
 const router = express.Router();
 
 const PEPPER_SECRET = config.PEPPER_SECRET;
 
 if (!PEPPER_SECRET) {
-  console.err('PEPPER가 정의되지않았습니다.');
+  console.error('PEPPER가 정의되지않았습니다.');
   process.exit(1);
 }
 
@@ -28,14 +30,14 @@ router.get('/', async (req, res, next) => {
     const total = await prisma.study.count();
     const totalPages = Math.ceil(total / limit);
 
-    const SORT_MAPING = {
+    const SORT_MAPPING = {
       latest: { createdAt: 'desc' },
       oldest: { createdAt: 'asc' },
       mostPoint: { point: 'desc' },
       fewerPoint: { point: 'asc' },
     };
 
-    const sortOpt = SORT_MAPING[orderBy];
+    const sortOpt = SORT_MAPPING[orderBy] || { createdAt: 'desc' };
 
     const studies = await studyRepo.findStudies(sortOpt, keyword, page, limit);
     res.status(200).json({
@@ -55,30 +57,32 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-router.post('/', async (req, res, next) => {
-  try {
-    const { nickname, title, description, background, password } = req.body;
+router.post(
+  '/',
+  validate(createStudyValidation, 'body'),
+  async (req, res, next) => {
+    try {
+      const { nickname, title, description, background, password } = req.body;
 
-    const passwordWithPepper = password + PEPPER_SECRET;
-    const hashedPassword = await bcrypt.hash(passwordWithPepper, 10);
-    /** password! */
-    const newStudy = await studyRepo.createStudy(
-      nickname,
-      title,
-      description,
-      background,
-      hashedPassword,
-    );
-    res.status(201).json({
-      success: true,
-      message: '스터디를 만들었습니다',
-      data: newStudy,
-    });
-  } catch (err) {
-    next(err);
-    return;
-  }
-});
+      const passwordWithPepper = password + PEPPER_SECRET;
+      const hashedPassword = await bcrypt.hash(passwordWithPepper, 10);
+      /** password! */
+      await studyRepo.createStudy(
+        nickname,
+        title,
+        description,
+        background,
+        hashedPassword,
+      );
+      res.status(201).json({
+        success: true,
+        message: '스터디를 만들었습니다',
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 
 router.get('/:id', async (req, res, next) => {
   try {
