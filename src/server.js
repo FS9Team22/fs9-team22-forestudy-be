@@ -6,6 +6,7 @@ import { config, isDevelopment } from './config/config.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 import { disconnectDB } from './db/prisma.js';
 import { cors } from './middlewares/cors.js';
+import { sessionMiddleware } from './middlewares/sessionConfig.js';
 
 const app = express();
 
@@ -19,6 +20,8 @@ if (isDevelopment) {
   app.use(logger);
   app.use(requestTimer);
 }
+
+app.use(sessionMiddleware);
 
 app.use('/', router);
 
