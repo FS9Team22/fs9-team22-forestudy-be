@@ -54,3 +54,9 @@ model HabitLog{
  @@unique([habitId, loggingDate]) //복합 고유 필드
  @@index([loggingDate])
 }
+
+model Session {
+  sid        String   @id
+  data      String
+  expiresAt DateTime
+}
