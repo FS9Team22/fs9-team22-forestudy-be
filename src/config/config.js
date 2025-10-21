@@ -8,6 +8,8 @@ const envSchema = z.object({
   DATABASE_URL: z.string().startsWith('postgresql://'),
   FRONT_URL: z.string(),
   PEPPER_SECRET: z.string(),
+  SESSION_SECRET: z.string(),
+  HASHING_COUNT: z.coerce.number(),
 });
 
 const parseEnvironment = () => {
@@ -18,6 +20,8 @@ const parseEnvironment = () => {
       DATABASE_URL: process.env.DATABASE_URL,
       FRONT_URL: process.env.FRONT_URL,
       PEPPER_SECRET: process.env.PEPPER_SECRET,
+      SESSION_SECRET: process.env.SESSION_SECRET,
+      HASHING_COUNT: process.env.HASHING_COUNT,
     });
   } catch (err) {
     if (err instanceof z.ZodError) {
