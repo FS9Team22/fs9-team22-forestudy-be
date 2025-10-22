@@ -1,7 +1,8 @@
-import { PrismaClient } from '@prisma/client';
+import * as pointRepo from '../../../repository/study/point/point.repo.js';
+import { BadRequestException } from '../../../err/badRequestException.js';
+import { NotFoundException } from '../../../err/notFoundException.js';
 
-const prisma = new PrismaClient();
-
+// ✅ 스터디 포인트 업데이트
 export const updateStudyPoints = async (req, res) => {
   const { studyId } = req.params;
   const { point } = req.body;
@@ -9,26 +10,22 @@ export const updateStudyPoints = async (req, res) => {
   if (!point) {
     return res
       .status(400)
-      .json({ success: false, message: 'point 값이 필요합니다' });
+      .json({ success: false, message: new BadRequestException().message });
   }
 
   try {
-    // studyId로 스터디 조회
-    const study = await prisma.study.findUnique({
-      where: { id: studyId }, // Prisma에서 id 타입 확인 필요: string이면 그대로, number면 parseInt(studyId)
-    });
+    const study = await pointRepo.findStudyById(studyId);
 
     if (!study) {
       return res
         .status(404)
-        .json({ success: false, message: '스터디를 찾을 수 없습니다' });
+        .json({ success: false, message: new NotFoundException().message });
     }
 
-    // 포인트 업데이트
-    const updatedStudy = await prisma.study.update({
-      where: { id: studyId },
-      data: { point: (study.point || 0) + point },
-    });
+    const updatedStudy = await pointRepo.updateStudyPoints(
+      studyId,
+      (study.point || 0) + point,
+    );
 
     res.json({
       success: true,
@@ -41,18 +38,17 @@ export const updateStudyPoints = async (req, res) => {
   }
 };
 
+// ✅ 스터디 조회
 export const getStudy = async (req, res) => {
   const { studyId } = req.params;
 
   try {
-    const study = await prisma.study.findUnique({
-      where: { id: studyId },
-    });
+    const study = await pointRepo.findStudyById(studyId);
 
     if (!study) {
       return res
         .status(404)
-        .json({ success: false, message: '스터디를 찾을 수 없습니다' });
+        .json({ success: false, message: new NotFoundException().message });
     }
 
     res.json({

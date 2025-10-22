@@ -1,31 +1,23 @@
 import express from 'express';
-import { PrismaClient } from '@prisma/client';
+import * as reactionRepo from '../../../repository/study/reaction/reaction.repo.js';
 
-const prisma = new PrismaClient();
 const router = express.Router();
 
-// ✅ 리액션 추가 함수
 export async function addReaction(req, res) {
   try {
     const { studyId } = req.params;
     const { emoji } = req.body;
 
-    // 기존 리액션 찾기
-    const existing = await prisma.reaction.findFirst({
-      where: { studyId, emoji },
-    });
-
+    const existing = await reactionRepo.findReaction(studyId, emoji);
     let reaction;
 
     if (existing) {
-      reaction = await prisma.reaction.update({
-        where: { id: existing.id },
-        data: { count: existing.count + 1 },
-      });
+      reaction = await reactionRepo.updateReactionCount(
+        existing.id,
+        existing.count + 1,
+      );
     } else {
-      reaction = await prisma.reaction.create({
-        data: { studyId, emoji, count: 1 },
-      });
+      reaction = await reactionRepo.createReaction(studyId, emoji);
     }
 
     res.json(reaction);
@@ -35,14 +27,10 @@ export async function addReaction(req, res) {
   }
 }
 
-// ✅ 리액션 조회 함수
 export async function getReactions(req, res) {
   try {
     const { studyId } = req.params;
-
-    const reactions = await prisma.reaction.findMany({
-      where: { studyId },
-    });
+    const reactions = await reactionRepo.getReactionsByStudy(studyId);
 
     const counts = reactions.reduce((acc, r) => {
       acc[r.emoji] = r.count;
@@ -56,7 +44,6 @@ export async function getReactions(req, res) {
   }
 }
 
-// ✅ 라우터 연결
 router.post('/', addReaction);
 router.get('/', getReactions);
 
