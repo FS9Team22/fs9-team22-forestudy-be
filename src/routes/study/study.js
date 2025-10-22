@@ -5,6 +5,10 @@ import { config } from '../../config/config.js';
 import { studyRepo } from '../../repository/study/study.repo.js';
 import { NotFoundException } from '../../err/notFoundException.js';
 
+//Point, Reaction 관련
+import { updateStudyPoints, getStudy } from '../study/reaction/point.js';
+import { addReaction, getReactions } from '../study/reaction/reaction.js';
+
 const router = express.Router();
 
 const PEPPER_SECRET = config.PEPPER_SECRET;
@@ -92,5 +96,15 @@ router.get('/:id', async (req, res, next) => {
     next(err);
   }
 });
+
+// Study 조회
+router.get('/:studyId', getStudy);
+
+// Point 관련 라우터
+router.post('/:studyId/point', updateStudyPoints);
+
+// Reaction 관련 라우터
+router.get('/:studyId/reaction', getReactions);
+router.post('/:studyId/reaction', addReaction);
 
 export default router;
