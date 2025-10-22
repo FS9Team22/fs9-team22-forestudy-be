@@ -7,19 +7,7 @@ export async function addReaction(req, res) {
   try {
     const { studyId } = req.params;
     const { emoji } = req.body;
-
-    const existing = await reactionRepo.findReaction(studyId, emoji);
-    let reaction;
-
-    if (existing) {
-      reaction = await reactionRepo.updateReactionCount(
-        existing.id,
-        existing.count + 1,
-      );
-    } else {
-      reaction = await reactionRepo.createReaction(studyId, emoji);
-    }
-
+    const reaction = await reactionRepo.addOrUpdateReaction(studyId, emoji);
     res.json(reaction);
   } catch (err) {
     console.error('❌ 리액션 추가 실패:', err);
@@ -30,13 +18,7 @@ export async function addReaction(req, res) {
 export async function getReactions(req, res) {
   try {
     const { studyId } = req.params;
-    const reactions = await reactionRepo.getReactionsByStudy(studyId);
-
-    const counts = reactions.reduce((acc, r) => {
-      acc[r.emoji] = r.count;
-      return acc;
-    }, {});
-
+    const counts = await reactionRepo.getReactionsCount(studyId);
     res.json(counts);
   } catch (err) {
     console.error('❌ 리액션 조회 실패:', err);
