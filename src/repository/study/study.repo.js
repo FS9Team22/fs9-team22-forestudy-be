@@ -36,8 +36,15 @@ async function findStudyById(id) {
   });
 }
 
+async function deleteStudyById(id) {
+  return await prisma.study.delete({
+    where: { id: String(id) },
+  });
+}
+
 export const studyRepo = {
   createStudy,
   findStudies,
   findStudyById,
+  deleteStudyById,
 };

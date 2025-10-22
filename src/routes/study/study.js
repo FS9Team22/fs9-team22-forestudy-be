@@ -66,26 +66,30 @@ router.post(
     try {
       const { nickname, title, description, background, password } = req.body;
 
-    const passwordWithPepper = password + PEPPER_SECRET;
-    const hashedPassword = await bcrypt.hash(passwordWithPepper, HASHING_COUNT);
-    /** password! */
-    const newStudy = await studyRepo.createStudy(
-      nickname,
-      title,
-      description,
-      background,
-      hashedPassword,
-    );
-    res.status(201).json({
-      success: true,
-      message: '스터디를 만들었습니다',
-      data: newStudy,
-    });
-  } catch (err) {
-    next(err);
-    return;
-  }
-});
+      const passwordWithPepper = password + PEPPER_SECRET;
+      const hashedPassword = await bcrypt.hash(
+        passwordWithPepper,
+        HASHING_COUNT,
+      );
+      /** password! */
+      const newStudy = await studyRepo.createStudy(
+        nickname,
+        title,
+        description,
+        background,
+        hashedPassword,
+      );
+      res.status(201).json({
+        success: true,
+        message: '스터디를 만들었습니다',
+        data: newStudy,
+      });
+    } catch (err) {
+      next(err);
+      return;
+    }
+  },
+);
 
 router.get('/:id', async (req, res, next) => {
   try {
@@ -100,23 +104,36 @@ router.get('/:id', async (req, res, next) => {
   }
 });
 
+router.delete('/:id', async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const study = await studyRepo.findStudyById(id);
+    if (!study) {
+      throw new NotFoundException('존재하지 않는 스터디입니다.');
+    }
+    const deletedStudy = await studyRepo.deleteStudyById(id);
+    res.json({ success: true, data: deletedStudy });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.post('/:id/login', async (req, res, next) => {
   try {
     const { id } = req.params;
     const { password } = req.body;
-    const study = await studyRepo.findStudyById(id);
+    const study = await studyRepo.findStudyByIdWithPassword(id); // 비밀번호를 포함하여 스터디 정보를 가져옵니다.
     if (!study) {
       throw new NotFoundException('존재하지 않는 스터디입니다.');
     }
 
     const passwordPeppering = password + PEPPER_SECRET;
-    const passwordHashing = await bcrypt.hash(passwordPeppering, HASHING_COUNT);
-    const isPasswordVaild = await bcrypt.compare(
-      passwordHashing,
+    const isPasswordValid = await bcrypt.compare(
+      passwordPeppering,
       study.password,
     );
 
-    if (!isPasswordVaild) {
+    if (!isPasswordValid) {
       throw new UnauthorizedException('비밀번호가 틀렸습니다.');
     }
 
