@@ -25,6 +25,7 @@ model Study{
  updatedAt  DateTime  @updatedAt //업데이트 시각
  habits Habit[]
  reactions Reaction[]
+ session Session[]
 }
 
 model Reaction{
@@ -53,4 +54,12 @@ model HabitLog{
  loggingDate DateTime @default(dbgenerated("CURRENT_DATE")) @db.Date //로깅 생성 시간(===달성 시간)
  @@unique([habitId, loggingDate]) //복합 고유 필드
  @@index([loggingDate])
+}
+
+model Session {
+  sid       String   @id
+  studyId   String 
+  study     Study @relation(fields: [studyId], references: [id], onDelete: Cascade)
+  data      String
+  expiresAt DateTime
 }

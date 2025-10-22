@@ -4,6 +4,9 @@ import { prisma } from '../../db/prisma.js';
 import { config } from '../../config/config.js';
 import { studyRepo } from '../../repository/study/study.repo.js';
 import { NotFoundException } from '../../err/notFoundException.js';
+import { UnauthorizedException } from '../../err/unauthorizedException.js';
+import { validate } from '../../middlewares/validate.js';
+import { createStudyValidation } from '../../validations/study.validation.js';
 
 //Point, Reaction 관련
 import { updateStudyPoints, getStudy } from '../study/reaction/point.js';
@@ -12,9 +15,10 @@ import { addReaction, getReactions } from '../study/reaction/reaction.js';
 const router = express.Router();
 
 const PEPPER_SECRET = config.PEPPER_SECRET;
+const HASHING_COUNT = config.HASHING_COUNT;
 
 if (!PEPPER_SECRET) {
-  console.err('PEPPER가 정의되지않았습니다.');
+  console.error('PEPPER가 정의되지않았습니다.');
   process.exit(1);
 }
 
@@ -27,19 +31,19 @@ router.get('/', async (req, res, next) => {
       limit: limitStr = 6,
     } = req.query;
 
-    const page = parseInt(pageStr);
-    const limit = parseInt(limitStr);
+    const page = Number.isNaN(parseInt(pageStr)) ? 1 : parseInt(pageStr);
+    const limit = Number.isNaN(parseInt(limitStr)) ? 6 : parseInt(limitStr);
     const total = await prisma.study.count();
     const totalPages = Math.ceil(total / limit);
 
-    const SORT_MAPING = {
+    const SORT_MAPPING = {
       latest: { createdAt: 'desc' },
       oldest: { createdAt: 'asc' },
       mostPoint: { point: 'desc' },
       fewerPoint: { point: 'asc' },
     };
 
-    const sortOpt = SORT_MAPING[orderBy];
+    const sortOpt = SORT_MAPPING[orderBy] || { createdAt: 'desc' };
 
     const studies = await studyRepo.findStudies(sortOpt, keyword, page, limit);
     res.status(200).json({
@@ -59,30 +63,37 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-router.post('/', async (req, res, next) => {
-  try {
-    const { nickname, title, description, background, password } = req.body;
+router.post(
+  '/',
+  validate(createStudyValidation, 'body'),
+  async (req, res, next) => {
+    try {
+      const { nickname, title, description, background, password } = req.body;
 
-    const passwordWithPepper = password + PEPPER_SECRET;
-    const hashedPassword = await bcrypt.hash(passwordWithPepper, 10);
-    /** password! */
-    const newStudy = await studyRepo.createStudy(
-      nickname,
-      title,
-      description,
-      background,
-      hashedPassword,
-    );
-    res.status(201).json({
-      success: true,
-      message: '스터디를 만들었습니다',
-      data: newStudy,
-    });
-  } catch (err) {
-    next(err);
-    return;
-  }
-});
+      const passwordWithPepper = password + PEPPER_SECRET;
+      const hashedPassword = await bcrypt.hash(
+        passwordWithPepper,
+        HASHING_COUNT,
+      );
+      /** password! */
+      const newStudy = await studyRepo.createStudy(
+        nickname,
+        title,
+        description,
+        background,
+        hashedPassword,
+      );
+      res.status(201).json({
+        success: true,
+        message: '스터디를 만들었습니다',
+        data: newStudy,
+      });
+    } catch (err) {
+      next(err);
+      return;
+    }
+  },
+);
 
 router.get('/:id', async (req, res, next) => {
   try {
@@ -94,6 +105,56 @@ router.get('/:id', async (req, res, next) => {
     res.json({ success: true, data: study });
   } catch (err) {
     next(err);
+  }
+});
+
+router.post('/:id/login', async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { password } = req.body;
+    const study = await studyRepo.findStudyById(id);
+    if (!study) {
+      throw new NotFoundException('존재하지 않는 스터디입니다.');
+    }
+
+    const passwordPeppering = password + PEPPER_SECRET;
+    const passwordHashing = await bcrypt.hash(passwordPeppering, HASHING_COUNT);
+    const isPasswordVaild = await bcrypt.compare(
+      passwordHashing,
+      study.password,
+    );
+
+    if (!isPasswordVaild) {
+      throw new UnauthorizedException('비밀번호가 틀렸습니다.');
+    }
+
+    if (!req.session.authStudy) req.session.authStudy = [];
+    if (!req.session.authStudy.includes(id)) req.session.authStudy.push(id);
+
+    res.json({ message: '인증되었습니다.' });
+  } catch (err) {
+    next(err);
+    return;
+  }
+});
+
+router.post('/:id.logout', async (req, res, next) => {
+  try {
+    await new Promise((resolve, reject) => {
+      req.session.destroy((err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
+    });
+
+    res.clearCookie('connect.sid');
+    res.status(200).json({ message: '로그아웃 성공' });
+  } catch (err) {
+    next(err);
+    return;
   }
 });
 
