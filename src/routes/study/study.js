@@ -8,6 +8,10 @@ import { UnauthorizedException } from '../../err/unauthorizedException.js';
 import { validate } from '../../middlewares/validate.js';
 import { createStudyValidation } from '../../validations/study.validation.js';
 
+//Point, Reaction 관련
+import { updateStudyPoints, getStudy } from '../study/reaction/point.js';
+import { addReaction, getReactions } from '../study/reaction/reaction.js';
+
 const router = express.Router();
 
 const PEPPER_SECRET = config.PEPPER_SECRET;
@@ -189,5 +193,15 @@ router.post('/:id.logout', async (req, res, next) => {
     return;
   }
 });
+
+// Study 조회
+router.get('/:studyId', getStudy);
+
+// Point 관련 라우터
+router.post('/:studyId/point', updateStudyPoints);
+
+// Reaction 관련 라우터
+router.get('/:studyId/reaction', getReactions);
+router.post('/:studyId/reaction', addReaction);
 
 export default router;
