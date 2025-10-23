@@ -108,23 +108,59 @@ router.get('/:id', async (req, res, next) => {
   }
 });
 
+router.delete('/:id', async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { password } = req.body;
+
+    if (!password) {
+      // 401 Unauthorized 또는 400 Bad Request를 사용할 수 있습니다.
+      // 비밀번호가 없다는 것은 인증 시도가 실패한 것으로 볼 수 있습니다.
+      throw new UnauthorizedException('비밀번호를 입력해주세요.');
+    }
+
+    const study = await studyRepo.findStudyByIdWithPassword(id);
+    if (!study) {
+      throw new NotFoundException('존재하지 않는 스터디입니다.');
+    }
+
+    const passwordWithPepper = password + PEPPER_SECRET;
+    const isPasswordValid = await bcrypt.compare(
+      passwordWithPepper,
+      study.password,
+    );
+
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('비밀번호가 틀렸습니다.');
+    }
+
+    const deletedStudy = await studyRepo.deleteStudyById(id);
+    res.json({
+      success: true,
+      message: '스터디가 삭제되었습니다.',
+      data: { id: deletedStudy.id },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.post('/:id/login', async (req, res, next) => {
   try {
     const { id } = req.params;
     const { password } = req.body;
-    const study = await studyRepo.findStudyById(id);
+    const study = await studyRepo.findStudyByIdWithPassword(id); // 비밀번호를 포함하여 스터디 정보를 가져옵니다.
     if (!study) {
       throw new NotFoundException('존재하지 않는 스터디입니다.');
     }
 
     const passwordPeppering = password + PEPPER_SECRET;
-    const passwordHashing = await bcrypt.hash(passwordPeppering, HASHING_COUNT);
-    const isPasswordVaild = await bcrypt.compare(
-      passwordHashing,
+    const isPasswordValid = await bcrypt.compare(
+      passwordPeppering,
       study.password,
     );
 
-    if (!isPasswordVaild) {
+    if (!isPasswordValid) {
       throw new UnauthorizedException('비밀번호가 틀렸습니다.');
     }
 
@@ -138,7 +174,7 @@ router.post('/:id/login', async (req, res, next) => {
   }
 });
 
-router.post('/:id.logout', async (req, res, next) => {
+router.post('/:id/logout', async (req, res, next) => {
   try {
     await new Promise((resolve, reject) => {
       req.session.destroy((err) => {

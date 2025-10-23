@@ -36,8 +36,22 @@ async function findStudyById(id) {
   });
 }
 
+async function findStudyByIdWithPassword(id) {
+  return await prisma.study.findUnique({
+    where: { id: String(id) },
+  });
+}
+
+async function deleteStudyById(id) {
+  return await prisma.study.delete({
+    where: { id: String(id) },
+  });
+}
+
 export const studyRepo = {
   createStudy,
   findStudies,
   findStudyById,
+  findStudyByIdWithPassword,
+  deleteStudyById,
 };
