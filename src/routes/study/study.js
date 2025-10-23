@@ -174,7 +174,7 @@ router.post('/:id/login', async (req, res, next) => {
   }
 });
 
-router.post('/:id.logout', async (req, res, next) => {
+router.post('/:id/logout', async (req, res, next) => {
   try {
     await new Promise((resolve, reject) => {
       req.session.destroy((err) => {
