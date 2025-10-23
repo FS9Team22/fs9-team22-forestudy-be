@@ -8,6 +8,10 @@ import { UnauthorizedException } from '../../err/unauthorizedException.js';
 import { validate } from '../../middlewares/validate.js';
 import { createStudyValidation } from '../../validations/study.validation.js';
 
+//Point, Reaction 관련
+import { updateStudyPoints, getStudy } from '../study/reaction/point.js';
+import { addReaction, getReactions } from '../study/reaction/reaction.js';
+
 const router = express.Router();
 
 const PEPPER_SECRET = config.PEPPER_SECRET;
@@ -66,26 +70,30 @@ router.post(
     try {
       const { nickname, title, description, background, password } = req.body;
 
-    const passwordWithPepper = password + PEPPER_SECRET;
-    const hashedPassword = await bcrypt.hash(passwordWithPepper, HASHING_COUNT);
-    /** password! */
-    const newStudy = await studyRepo.createStudy(
-      nickname,
-      title,
-      description,
-      background,
-      hashedPassword,
-    );
-    res.status(201).json({
-      success: true,
-      message: '스터디를 만들었습니다',
-      data: newStudy,
-    });
-  } catch (err) {
-    next(err);
-    return;
-  }
-});
+      const passwordWithPepper = password + PEPPER_SECRET;
+      const hashedPassword = await bcrypt.hash(
+        passwordWithPepper,
+        HASHING_COUNT,
+      );
+      /** password! */
+      const newStudy = await studyRepo.createStudy(
+        nickname,
+        title,
+        description,
+        background,
+        hashedPassword,
+      );
+      res.status(201).json({
+        success: true,
+        message: '스터디를 만들었습니다',
+        data: newStudy,
+      });
+    } catch (err) {
+      next(err);
+      return;
+    }
+  },
+);
 
 router.get('/:id', async (req, res, next) => {
   try {
@@ -149,5 +157,15 @@ router.post('/:id.logout', async (req, res, next) => {
     return;
   }
 });
+
+// Study 조회
+router.get('/:studyId', getStudy);
+
+// Point 관련 라우터
+router.post('/:studyId/point', updateStudyPoints);
+
+// Reaction 관련 라우터
+router.get('/:studyId/reaction', getReactions);
+router.post('/:studyId/reaction', addReaction);
 
 export default router;
