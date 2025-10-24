@@ -1,5 +1,14 @@
 import { prisma } from '../../../db/prisma.js';
 
+async function createHabitByStudyId(name, studyId) {
+  return await prisma.habit.create({
+    data: {
+      studyId,
+      name,
+    },
+  });
+}
+
 async function findHabitListByStudyId(studyId) {
   return await prisma.habit.findMany({
     where: { studyId: String(studyId) },
@@ -7,6 +16,24 @@ async function findHabitListByStudyId(studyId) {
   });
 }
 
+async function updateHabitByHabitId(id, name) {
+  return await prisma.habit.update({
+    where: { id: String(id) },
+    data: {
+      name,
+    },
+  });
+}
+
+async function deleteHabitById(id) {
+  return await prisma.habit.delete({
+    where: { id: String(id) },
+  });
+}
+
 export const habitRepo = {
+  createHabitByStudyId,
   findHabitListByStudyId,
+  updateHabitByHabitId,
+  deleteHabitById,
 };
