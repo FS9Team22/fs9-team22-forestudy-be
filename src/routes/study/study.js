@@ -7,10 +7,7 @@ import { NotFoundException } from '../../err/notFoundException.js';
 import { UnauthorizedException } from '../../err/unauthorizedException.js';
 import { validate } from '../../middlewares/validate.js';
 import { createStudyValidation } from '../../validations/study.validation.js';
-
-//Point, Reaction 관련
-import { updateStudyPoints, getStudy } from '../study/reaction/point.js';
-import { addReaction, getReactions } from '../study/reaction/reaction.js';
+import { updateStudyPoints } from './point.js';
 
 const router = express.Router();
 
@@ -59,7 +56,6 @@ router.get('/', async (req, res, next) => {
     });
   } catch (err) {
     next(err);
-    return;
   }
 });
 
@@ -90,7 +86,6 @@ router.post(
       });
     } catch (err) {
       next(err);
-      return;
     }
   },
 );
@@ -164,44 +159,40 @@ router.post('/:id/login', async (req, res, next) => {
       throw new UnauthorizedException('비밀번호가 틀렸습니다.');
     }
 
-    if (!req.session.authStudy) req.session.authStudy = [];
-    if (!req.session.authStudy.includes(id)) req.session.authStudy.push(id);
+    req.session.authStudy = req.session.authStudy || [];
+    if (!req.session.authStudy.includes(id)) {
+      req.session.authStudy.push(id);
+    }
 
-    res.json({ message: '인증되었습니다.' });
+    req.session.save(() =>
+      res.json({
+        message: '인증되었습니다.',
+        authStudy: req.session.authStudy,
+      }),
+    );
+    console.log(res);
   } catch (err) {
     next(err);
-    return;
   }
 });
 
 router.post('/:id/logout', async (req, res, next) => {
   try {
-    await new Promise((resolve, reject) => {
-      req.session.destroy((err) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve();
-        }
-      });
-    });
+    const { id } = req.params;
+    if (req.session.authStudy) {
+      // authStudy 배열에서 해당 study id를 제거합니다.
+      req.session.authStudy = req.session.authStudy.filter(
+        (studyId) => studyId !== id,
+      );
+    }
 
-    res.clearCookie('connect.sid');
     res.status(200).json({ message: '로그아웃 성공' });
   } catch (err) {
     next(err);
-    return;
   }
 });
 
-// Study 조회
-router.get('/:studyId', getStudy);
-
 // Point 관련 라우터
 router.post('/:studyId/point', updateStudyPoints);
-
-// Reaction 관련 라우터
-router.get('/:studyId/reaction', getReactions);
-router.post('/:studyId/reaction', addReaction);
 
 export default router;
