@@ -159,10 +159,18 @@ router.post('/:id/login', async (req, res, next) => {
       throw new UnauthorizedException('비밀번호가 틀렸습니다.');
     }
 
-    if (!req.session.authStudy) req.session.authStudy = [];
-    if (!req.session.authStudy.includes(id)) req.session.authStudy.push(id);
+    req.session.authStudy = req.session.authStudy || [];
+    if (!req.session.authStudy.includes(id)) {
+      req.session.authStudy.push(id);
+    }
 
-    res.json({ message: '인증되었습니다.' });
+    req.session.save(() =>
+      res.json({
+        message: '인증되었습니다.',
+        authStudy: req.session.authStudy,
+      }),
+    );
+    console.log(res);
   } catch (err) {
     next(err);
   }
