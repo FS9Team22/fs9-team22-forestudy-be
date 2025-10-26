@@ -56,7 +56,6 @@ router.get('/', async (req, res, next) => {
     });
   } catch (err) {
     next(err);
-    return;
   }
 });
 
@@ -87,7 +86,6 @@ router.post(
       });
     } catch (err) {
       next(err);
-      return;
     }
   },
 );
@@ -167,27 +165,22 @@ router.post('/:id/login', async (req, res, next) => {
     res.json({ message: '인증되었습니다.' });
   } catch (err) {
     next(err);
-    return;
   }
 });
 
 router.post('/:id/logout', async (req, res, next) => {
   try {
-    await new Promise((resolve, reject) => {
-      req.session.destroy((err) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve();
-        }
-      });
-    });
+    const { id } = req.params;
+    if (req.session.authStudy) {
+      // authStudy 배열에서 해당 study id를 제거합니다.
+      req.session.authStudy = req.session.authStudy.filter(
+        (studyId) => studyId !== id,
+      );
+    }
 
-    res.clearCookie('connect.sid');
     res.status(200).json({ message: '로그아웃 성공' });
   } catch (err) {
     next(err);
-    return;
   }
 });
 
