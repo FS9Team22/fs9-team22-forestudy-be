@@ -44,7 +44,39 @@ async function findHabitCurrentWeekLogListByHabitId(habitId) {
   });
 }
 
+async function findHabitCurrentDayLogByHabitId(habitId) {
+  const today = new Date();
+  return await prisma.habitLog.findUnique({
+    where: {
+      habitId: String(habitId),
+      loggingDate: today,
+    },
+    orderBy: {
+      loggingDate: 'asc',
+    },
+  });
+}
+
+async function createHabitLogByHabitId(habitId) {
+  return await prisma.habitLog.create({
+    data: {
+      habitId: habitId,
+    },
+  });
+}
+
+async function deleteHabitLogById(id) {
+  return await prisma.habitLog.delete({
+    where: {
+      id: String(id),
+    },
+  });
+}
+
 export const habitLogRepo = {
   findHabitLogListByHabitId,
   findHabitCurrentWeekLogListByHabitId,
+  findHabitCurrentDayLogByHabitId,
+  createHabitLogByHabitId,
+  deleteHabitLogById,
 };

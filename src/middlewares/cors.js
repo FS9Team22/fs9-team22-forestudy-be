@@ -6,10 +6,13 @@ export const cors = (req, res, next) => {
     ? config.FRONT_URL.split(',').map((url) => url.trim())
     : [];
   const isAllowed = whiteList.includes(origin);
+  const allowedOrigin = isAllowed || isDevelopment ? origin : whiteList[0];
 
-  if (isAllowed || isDevelopment) {
-    res.header('Access-Control-Allow-Origin', origin);
+  if (!allowedOrigin) {
+    return next();
   }
+
+  res.header('Access-Control-Allow-Origin', allowedOrigin);
 
   res.header(
     'Access-Control-Allow-Methods',
