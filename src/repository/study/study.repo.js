@@ -21,6 +21,9 @@ async function findStudies(sortOpt, keyword, page, limit) {
         { title: { contains: keyword, mode: 'insensitive' } },
       ],
     },
+    include: {
+      reactions: true,
+    },
     orderBy: sortOpt,
     skip: limit * (page - 1),
     take: limit,
