@@ -7,6 +7,26 @@ async function findHabitListByStudyId(studyId) {
   });
 }
 
+async function replaceHabits(studyId, habits) {
+  return prisma.$transaction(async (tx) => {
+    // habit deleteAll
+    await tx.habit.deleteMany({ where: { studyId } });
+
+    if (habits && habits.length > 0) {
+      await tx.habit.createMany({
+        data: habits.map((habit) => ({
+          name: habit.name,
+          studyId,
+          //추후 isDone 플래그
+        })),
+      });
+    }
+
+    return tx.habit.findMany({ where: { studyId } });
+  });
+}
+
 export const habitRepo = {
   findHabitListByStudyId,
+  replaceHabits,
 };
