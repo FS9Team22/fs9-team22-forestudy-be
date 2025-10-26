@@ -1,6 +1,6 @@
 import { prisma } from '../../../db/prisma.js';
 
-async function createHabitByStudyId(name, studyId) {
+async function createHabitByStudyId(studyId, name) {
   return await prisma.habit.create({
     data: {
       studyId,
@@ -13,6 +13,12 @@ async function findHabitListByStudyId(studyId) {
   return await prisma.habit.findMany({
     where: { studyId: String(studyId) },
     orderBy: { createdAt: 'asc' },
+  });
+}
+
+async function findHabitById(id) {
+  return await prisma.habit.findUnique({
+    where: { id: String(id) },
   });
 }
 
@@ -34,6 +40,7 @@ async function deleteHabitById(id) {
 export const habitRepo = {
   createHabitByStudyId,
   findHabitListByStudyId,
+  findHabitById,
   updateHabitByHabitId,
   deleteHabitById,
 };
