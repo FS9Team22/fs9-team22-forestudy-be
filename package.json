@@ -30,8 +30,10 @@
     ]
   },
   "dependencies": {
-    "@prisma/client": "^6.16.3",
-    "express": "^5.1.0"
+    "@prisma/client": "^5.22.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "prisma": "^5.22.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.37.0",
@@ -39,7 +41,6 @@
     "husky": "^9.1.7",
     "lint-staged": "^16.2.4",
     "nodemon": "^3.1.10",
-    "prettier": "^3.6.2",
-    "prisma": "^6.16.3"
+    "prettier": "^3.6.2"
   }
 }
