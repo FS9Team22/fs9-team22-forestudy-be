@@ -58,17 +58,19 @@ async function findHabitCurrentDayLogByHabitId(habitId) {
 }
 
 async function createHabitLogByHabitId(habitId) {
-  return await prisma.habitLog.create({
-    data: {
-      habitId: habitId,
+  return await prisma.habitLog.upsert({
+    where: {
+      habitId_loggingDate: { habitId: habitId, loggingDate: new Date() },
     },
+    update: {},
+    create: { habitId: habitId, loggingDate: new Date() },
   });
 }
 
 async function deleteHabitLogById(id) {
   return await prisma.habitLog.delete({
     where: {
-      id: String(id),
+      id: id,
     },
   });
 }
