@@ -65,7 +65,7 @@ router.post('/', async (req, res, next) => {
 router.delete('/:id', async (req, res, next) => {
   try {
     const habitLogId = req.params.id;
-    const deleteHabitLog = habitLogRepo.deleteHabitLogById(habitLogId);
+    const deleteHabitLog = await habitLogRepo.deleteHabitLogById(habitLogId);
     res.json({ success: true, data: deleteHabitLog });
   } catch (err) {
     next(err);
