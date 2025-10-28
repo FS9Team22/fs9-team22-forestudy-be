@@ -46,7 +46,7 @@ async function findHabitCurrentWeekLogListByHabitId(habitId) {
 
 async function findHabitCurrentDayLogByHabitId(habitId) {
   const today = new Date();
-  return await prisma.habitLog.findUnique({
+  return await prisma.habitLog.findMany({
     where: {
       habitId: String(habitId),
       loggingDate: today,
