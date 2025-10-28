@@ -51,9 +51,6 @@ async function findHabitCurrentDayLogByHabitId(habitId) {
       habitId: String(habitId),
       loggingDate: today,
     },
-    orderBy: {
-      loggingDate: 'asc',
-    },
   });
 }
 
