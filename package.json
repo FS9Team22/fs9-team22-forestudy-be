@@ -19,7 +19,7 @@
     "dev": "nodemon --env-file=.env src/server.js",
     "seed": "node scripts/seed.js",
     "format": "prettier --write .",
-    "prepare": "husky"
+    "prepare": "test \"$CI\" = \"true\" || husky"
   },
   "lint-staged": {
     "*.{js}": [
