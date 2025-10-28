@@ -38,7 +38,7 @@ router.get('/day', async (req, res, next) => {
     const habitId = req.params.habitId;
     console.log(habitId);
     const habitLogs =
-      await habitLogRepo.findHabitCurrentdayLogByHabitId(habitId);
+      await habitLogRepo.findHabitCurrentDayLogByHabitId(habitId);
     if (!habitLogs) {
       throw new NotFoundException('존재하지 않는 습관 내역입니다.');
     }
