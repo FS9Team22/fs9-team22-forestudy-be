@@ -17,21 +17,38 @@ async function findHabitListByStudyId(studyId) {
 }
 
 async function replaceHabits(studyId, habits) {
-  return prisma.$transaction(async (tx) => {
-    // habit deleteAll
-    await tx.habit.deleteMany({ where: { studyId } });
+  return await prisma.$transaction(async (tx) => {
+    const existingHabits = await tx.habit.findMany({
+      where: { studyId },
+      select: { id: true, name: true },
+    });
 
-    if (habits && habits.length > 0) {
-      await tx.habit.createMany({
-        data: habits.map((habit) => ({
-          name: habit.name,
-          studyId,
-          //추후 isDone 플래그
-        })),
+    const existingHabitNames = new Set(existingHabits.map((h) => h.name));
+    const incomingHabitNames = new Set(habits.map((h) => h.name));
+
+    const habitsToDelete = existingHabits.filter(
+      (h) => !incomingHabitNames.has(h.name),
+    );
+    const habitsToCreate = habits.filter(
+      (h) => !existingHabitNames.has(h.name),
+    );
+
+    if (habitsToDelete.length > 0) {
+      await tx.habit.deleteMany({
+        where: { id: { in: habitsToDelete.map((h) => h.id) } },
       });
     }
 
-    return tx.habit.findMany({ where: { studyId } });
+    if (habitsToCreate.length > 0) {
+      await tx.habit.createMany({
+        data: habitsToCreate.map((h) => ({ name: h.name, studyId })),
+      });
+    }
+
+    return await tx.habit.findMany({
+      where: { studyId },
+      orderBy: { createdAt: 'asc' },
+    });
   });
 }
 
